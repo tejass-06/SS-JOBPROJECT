@@ -695,6 +695,26 @@ const ProfilePage = () => {
                     </p>
                   </div>
 
+                  {/* Contact & Academic Credentials */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    <div>
+                      <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        <Phone size={12} className="text-sky-500" /> Primary Contact
+                      </h3>
+                      <p className="text-xs font-black uppercase text-black">
+                        {user.phone || 'Not Specified'}
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        <GraduationCap size={12} className="text-sky-500" /> Academic Institution
+                      </h3>
+                      <p className="text-xs font-black uppercase text-black truncate">
+                        {user.college || 'Not Specified'}
+                      </p>
+                    </div>
+                  </div>
+
                   {/* Skills Grid */}
                   <div>
                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Skills Matrix</h3>
