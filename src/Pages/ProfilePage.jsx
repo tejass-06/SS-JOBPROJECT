@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Zap, MapPin, Briefcase, Plus, X, Edit3, Save, LogOut, Check, 
   ShieldCheck, Crown, AlertTriangle, FileText, UploadCloud, Cpu, Layers, FileUp, Sparkles,
-  Camera, Phone, GraduationCap
+  Camera, Phone, GraduationCap, User, Bookmark
 } from 'lucide-react';
 
 const ProfilePage = () => {
@@ -22,12 +22,31 @@ const ProfilePage = () => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  // Tab & Dataset States
+  const [activeTab, setActiveTab] = useState('overview');
+  const [applications, setApplications] = useState([]);
+  const [savedJobs, setSavedJobs] = useState([]);
+  const [jobAlerts, setJobAlerts] = useState([]);
+  const [recommendedJobs, setRecommendedJobs] = useState([]);
 
   // Resume Importer States
   const [showImportModal, setShowImportModal] = useState(false);
   const [importingFile, setImportingFile] = useState(null);
   const [importStep, setImportStep] = useState('idle'); // 'idle' | 'uploading' | 'parsing' | 'extracting' | 'done'
   const [parsedData, setParsedData] = useState(null);
+
+  const calculateProfileStrength = () => {
+    let score = 0;
+    if (user?.profilePicture || editForm.profilePicture) score += 20;
+    if (user?.phone || editForm.phone) score += 20;
+    if (user?.college || editForm.college) score += 20;
+    if (user?.skills && user.skills.length > 0) score += 20;
+    if (user?.bio && user.bio.trim().length > 10) score += 20;
+    return score;
+  };
+  const strength = calculateProfileStrength();
 
 
   useEffect(() => {
@@ -60,7 +79,152 @@ const ProfilePage = () => {
       phone: parsedUser.phone || '',
       college: parsedUser.college || ''
     });
+
+    // Load Applications
+    const storedApps = localStorage.getItem('jobApplications');
+    if (storedApps) {
+      setApplications(JSON.parse(storedApps));
+    } else {
+      const defaultApps = [
+        { id: '1', jobTitle: 'React Frontend Developer', companyName: 'Cloudflare', dateApplied: '2026-06-28', status: 'Shortlisted' },
+        { id: '2', jobTitle: 'Junior Software Engineer', companyName: 'Vercel', dateApplied: '2026-06-29', status: 'Pending' }
+      ];
+      setApplications(defaultApps);
+      localStorage.setItem('jobApplications', JSON.stringify(defaultApps));
+    }
+
+    // Load Saved Bookmarked Jobs
+    const storedSaved = localStorage.getItem('savedJobs');
+    if (storedSaved) {
+      setSavedJobs(JSON.parse(storedSaved));
+    } else {
+      const defaultSaved = [
+        { id: 'rec3', title: 'Full Stack Node Developer', companyName: 'Vercel', location: 'Remote', salary: '₹16 - ₹24 LPA' }
+      ];
+      setSavedJobs(defaultSaved);
+      localStorage.setItem('savedJobs', JSON.stringify(defaultSaved));
+    }
+
+    // Load Saved Job Alerts
+    const storedAlerts = localStorage.getItem('jobAlerts');
+    if (storedAlerts) {
+      setJobAlerts(JSON.parse(storedAlerts));
+    } else {
+      const defaultAlerts = [
+        { id: 'a1', keyword: 'React Developer', location: 'Remote', experience: 'Fresher', active: true },
+        { id: 'a2', keyword: 'DevOps Engineer', location: 'Nagpur', experience: '3-5 Years', active: false }
+      ];
+      setJobAlerts(defaultAlerts);
+      localStorage.setItem('jobAlerts', JSON.stringify(defaultAlerts));
+    }
+
+    // Load and filter Recommended Jobs list
+    const allJobsJson = localStorage.getItem('postedJobs');
+    let allJobs = [];
+    if (allJobsJson) {
+      allJobs = JSON.parse(allJobsJson);
+    }
+    if (allJobs.length === 0) {
+      allJobs = [
+        {
+          id: 'rec1',
+          title: 'React Frontend Developer',
+          companyName: 'Cloudflare',
+          department: 'Engineering',
+          salary: '₹14 - ₹20 LPA',
+          location: 'Remote',
+          type: 'Full-time',
+          description: 'We are seeking an expert Frontend Engineer skilled in React, Tailwind CSS, and edge rendering.',
+          applicantsCount: 12,
+          datePosted: 'Jun 28, 2026'
+        },
+        {
+          id: 'rec2',
+          title: 'DevOps & Cloud Architect',
+          companyName: 'HashiCorp',
+          department: 'Infrastructure',
+          salary: '₹18 - ₹26 LPA',
+          location: 'Nagpur, India',
+          type: 'Full-time',
+          description: 'Scale our cloud orchestration clusters. Experience with Docker, Kubernetes, Terraform, and Go is required.',
+          applicantsCount: 8,
+          datePosted: 'Jun 29, 2026'
+        },
+        {
+          id: 'rec3',
+          title: 'Full Stack Node Developer',
+          companyName: 'Vercel',
+          department: 'Core Platforms',
+          salary: '₹16 - ₹24 LPA',
+          location: 'Remote',
+          type: 'Full-time',
+          description: 'Build backend microservices and serverless infrastructure using Node.js, Express, PostgreSQL, and Redis.',
+          applicantsCount: 15,
+          datePosted: 'Jun 30, 2026'
+        }
+      ];
+      localStorage.setItem('postedJobs', JSON.stringify(allJobs));
+    }
+    const candidateSkills = parsedUser.skills || ['React', 'JavaScript', 'Tailwind CSS'];
+    const matched = allJobs.filter(job => {
+      const descText = (job.title + ' ' + job.description + ' ' + job.department).toLowerCase();
+      return candidateSkills.some(skill => descText.includes(skill.toLowerCase()));
+    });
+    setRecommendedJobs(matched.length > 0 ? matched : allJobs);
   }, []);
+
+  const handleQuickApply = (job) => {
+    if (applications.some(app => app.jobTitle === job.title && app.companyName === job.companyName)) {
+      setToastMessage('Already applied to this role!');
+      setTimeout(() => setToastMessage(''), 3000);
+      return;
+    }
+
+    try {
+      const audio = new Audio('/src/assets/payment_success.mp3');
+      audio.volume = 0.4;
+      audio.play().catch(() => {});
+    } catch(e) {}
+
+    const newApp = {
+      id: Date.now().toString(),
+      jobTitle: job.title,
+      companyName: job.companyName,
+      dateApplied: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+      status: 'Pending'
+    };
+
+    const updatedApps = [newApp, ...applications];
+    setApplications(updatedApps);
+    localStorage.setItem('jobApplications', JSON.stringify(updatedApps));
+
+    setToastMessage(`Applied successfully to ${job.title}!`);
+    setTimeout(() => setToastMessage(''), 3000);
+  };
+
+  const handleWithdraw = (appId) => {
+    const updatedApps = applications.filter(app => app.id !== appId);
+    setApplications(updatedApps);
+    localStorage.setItem('jobApplications', JSON.stringify(updatedApps));
+    setToastMessage('Application withdrawn.');
+    setTimeout(() => setToastMessage(''), 3000);
+  };
+
+  const handleRemoveBookmark = (jobId) => {
+    const updatedSaved = savedJobs.filter(job => job.id !== jobId);
+    setSavedJobs(updatedSaved);
+    localStorage.setItem('savedJobs', JSON.stringify(updatedSaved));
+    setToastMessage('Bookmark removed.');
+    setTimeout(() => setToastMessage(''), 3000);
+  };
+
+  const handleToggleAlert = (alertId) => {
+    const updatedAlerts = jobAlerts.map(alert => alert.id === alertId ? { ...alert, active: !alert.active } : alert);
+    setJobAlerts(updatedAlerts);
+    localStorage.setItem('jobAlerts', JSON.stringify(updatedAlerts));
+    setToastMessage('Alert preferences updated!');
+    setTimeout(() => setToastMessage(''), 3000);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('currentUser');
@@ -353,15 +517,15 @@ const ProfilePage = () => {
 
       <div className="max-w-6xl mx-auto px-6 relative z-10">
         
-        {/* Success Alert */}
-        {saveSuccess && (
+        {/* Notifications Bar */}
+        {(saveSuccess || toastMessage) && (
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             className="mb-8 p-4 bg-sky-50 border-2 border-sky-500 text-sky-700 text-xs font-black uppercase tracking-wider flex items-center gap-2"
           >
-            <Check size={16} /> Profile database updated successfully!
+            <Check size={16} /> {saveSuccess ? "Profile database updated successfully!" : toastMessage}
           </motion.div>
         )}
 
@@ -369,6 +533,51 @@ const ProfilePage = () => {
           
           {/* --- LEFT CARD: USER STATS & INFO --- */}
           <div className="lg:col-span-4 space-y-6">
+            {/* Circular Profile Strength Meter & Checklist */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white border-[4px] border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+            >
+              {/* Radial Circle */}
+              <div className="flex items-center gap-4 mb-4 border-b-2 border-black pb-4">
+                <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
+                  <svg className="w-full h-full transform -rotate-90">
+                    <circle cx="28" cy="28" r="24" className="stroke-slate-100 fill-transparent" strokeWidth="5" />
+                    <circle cx="28" cy="28" r="24" className="stroke-sky-500 fill-transparent" strokeWidth="5"
+                            strokeDasharray={2 * Math.PI * 24}
+                            strokeDashoffset={2 * Math.PI * 24 * (1 - strength / 100)} />
+                  </svg>
+                  <span className="absolute text-[10px] font-black text-black">{strength}%</span>
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-black uppercase text-black leading-none mb-1">Profile Strength</h4>
+                  <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider leading-snug">
+                    {strength === 100 ? "Elite credentials locked!" : "Complete actions to hit 100%."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Checklist */}
+              <div className="space-y-2">
+                {[
+                  { label: "Profile Photo (+20%)", checked: !!(user?.profilePicture || editForm.profilePicture) },
+                  { label: "Phone Contact (+20%)", checked: !!(user?.phone || editForm.phone) },
+                  { label: "Academic Institution (+20%)", checked: !!(user?.college || editForm.college) },
+                  { label: "Skills Matrix (+20%)", checked: !!(user?.skills && user.skills.length > 0) },
+                  { label: "Bio Definition (+20%)", checked: !!(user?.bio && user.bio.trim().length > 10) }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-[9px] font-black uppercase tracking-wider">
+                    <span className={item.checked ? "text-slate-400 line-through" : "text-black"}>{item.label}</span>
+                    <span className={`px-1.5 py-0.5 border border-black text-[8px] font-black
+                      ${item.checked ? "bg-emerald-400 text-black" : "bg-slate-100 text-slate-400"}`}>
+                      {item.checked ? "DONE" : "TODO"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -687,62 +896,238 @@ const ProfilePage = () => {
                 </form>
               ) : (
                 <div className="space-y-8">
-                  {/* Bio */}
-                  <div>
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Bio Definition</h3>
-                    <p className="text-sm font-bold text-slate-700 leading-relaxed uppercase">
-                      {user.bio || 'Elite candidate seeking premium opportunities.'}
-                    </p>
-                  </div>
-
-                  {/* Contact & Academic Credentials */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                    <div>
-                      <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                        <Phone size={12} className="text-sky-500" /> Primary Contact
-                      </h3>
-                      <p className="text-xs font-black uppercase text-black">
-                        {user.phone || 'Not Specified'}
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                        <GraduationCap size={12} className="text-sky-500" /> Academic Institution
-                      </h3>
-                      <p className="text-xs font-black uppercase text-black truncate">
-                        {user.college || 'Not Specified'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Skills Grid */}
-                  <div>
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Skills Matrix</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {(user.skills || ['React', 'JavaScript', 'Tailwind CSS']).map((skill, index) => (
-                        <div 
-                          key={index}
-                          className="border-2 border-black px-3 py-1.5 text-[10px] font-black uppercase tracking-wider bg-sky-50 text-black hover:bg-sky-500 transition-colors"
-                        >
-                          {skill}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Applied Jobs Section Placeholder */}
-                  <div className="border-t-2 border-slate-100 pt-8">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Applications Log</h3>
-                    <div className="border-2 border-dashed border-slate-300 p-8 text-center bg-slate-50">
-                      <p className="text-xs font-black uppercase text-slate-400 tracking-wider">No active job transmissions found in registry.</p>
-                      <a 
-                        href="/careers" 
-                        className="inline-block mt-4 bg-black text-white px-6 py-3 text-[10px] font-black uppercase tracking-wider hover:bg-sky-500 hover:text-black transition-colors"
+                  {/* Tabs Bar */}
+                  <div className="flex flex-wrap gap-2 border-b-[3px] border-black pb-4 mb-6">
+                    {[
+                      { id: 'overview', label: 'Talent Profile', icon: <User size={14} /> },
+                      { id: 'applications', label: 'Applications Log', count: applications.length, icon: <FileText size={14} /> },
+                      { id: 'recommended', label: 'Recommended Feed', count: recommendedJobs.length, icon: <Sparkles size={14} /> },
+                      { id: 'saved', label: 'Bookmarks & Alerts', count: savedJobs.length, icon: <Bookmark size={14} /> }
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`px-4 py-2 border-2 border-black text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none
+                          ${activeTab === tab.id ? 'bg-sky-500 text-black' : 'bg-white hover:bg-slate-50'}`}
                       >
-                        Browse Careers
-                      </a>
-                    </div>
+                        {tab.icon}
+                        {tab.label}
+                        {tab.count !== undefined && (
+                          <span className="ml-1 bg-black text-white px-1.5 py-0.5 text-[8px] font-black border border-black rounded-none">
+                            {tab.count}
+                          </span>
+                        )}
+                      </button>
+                    ))}
                   </div>
+
+                  {/* TAB 1: OVERVIEW */}
+                  {activeTab === 'overview' && (
+                    <div className="space-y-8 animate-fadeIn">
+                      {/* Bio */}
+                      <div>
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Bio Definition</h3>
+                        <p className="text-sm font-bold text-slate-700 leading-relaxed uppercase">
+                          {user.bio || 'Elite candidate seeking premium opportunities.'}
+                        </p>
+                      </div>
+
+                      {/* Contact & Academic Credentials */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        <div>
+                          <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                            <Phone size={12} className="text-sky-500" /> Primary Contact
+                          </h3>
+                          <p className="text-xs font-black uppercase text-black">
+                            {user.phone || 'Not Specified'}
+                          </p>
+                        </div>
+                        <div>
+                          <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                            <GraduationCap size={12} className="text-sky-500" /> Academic Institution
+                          </h3>
+                          <p className="text-xs font-black uppercase text-black truncate">
+                            {user.college || 'Not Specified'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Skills Grid */}
+                      <div>
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Skills Matrix</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {(user.skills || ['React', 'JavaScript', 'Tailwind CSS']).map((skill, index) => (
+                            <div 
+                              key={index}
+                              className="border-2 border-black px-3 py-1.5 text-[10px] font-black uppercase tracking-wider bg-sky-50 text-black hover:bg-sky-500 transition-colors"
+                            >
+                              {skill}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 2: APPLICATIONS LOG */}
+                  {activeTab === 'applications' && (
+                    <div className="space-y-6 animate-fadeIn">
+                      <h3 className="text-xs font-black uppercase tracking-widest border-b-2 border-black pb-2">Active Applications</h3>
+                      {applications.length === 0 ? (
+                        <div className="border-2 border-dashed border-slate-300 p-8 text-center bg-slate-50">
+                          <p className="text-xs font-black uppercase text-slate-400 tracking-wider">No active job transmissions found in registry.</p>
+                          <a href="/careers" className="inline-block mt-4 bg-black text-white px-6 py-3 text-[10px] font-black uppercase tracking-wider hover:bg-sky-500 hover:text-black transition-colors">
+                            Browse Careers
+                          </a>
+                        </div>
+                      ) : (
+                        <div className="border-2 border-black overflow-hidden">
+                          <table className="w-full text-left border-collapse">
+                            <thead>
+                              <tr className="bg-black text-white text-[9px] font-black uppercase tracking-wider divide-x-2 divide-slate-800">
+                                <th className="p-3">Job Listing</th>
+                                <th className="p-3">Company</th>
+                                <th className="p-3">Applied Date</th>
+                                <th className="p-3 text-center">Status</th>
+                                <th className="p-3 text-center">Action</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y-2 divide-black font-bold text-xs uppercase text-slate-700">
+                              {applications.map(app => (
+                                <tr key={app.id} className="hover:bg-slate-50 divide-x-2 divide-black">
+                                  <td className="p-3 font-black text-black">{app.jobTitle}</td>
+                                  <td className="p-3">{app.companyName}</td>
+                                  <td className="p-3">{app.dateApplied}</td>
+                                  <td className="p-3 text-center">
+                                    <span className={`px-2 py-1 text-[8px] font-black border border-black
+                                      ${app.status === 'Shortlisted' ? 'bg-emerald-100 text-emerald-800' : app.status === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}`}>
+                                      {app.status}
+                                    </span>
+                                  </td>
+                                  <td className="p-3 text-center">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleWithdraw(app.id)}
+                                      className="text-red-500 hover:text-red-700 font-black text-[9px] tracking-wider uppercase border border-red-500 px-2 py-1 bg-white hover:bg-red-50 cursor-pointer"
+                                    >
+                                      Withdraw
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* TAB 3: RECOMMENDED FEED */}
+                  {activeTab === 'recommended' && (
+                    <div className="space-y-6 animate-fadeIn">
+                      <div className="flex justify-between items-center border-b-2 border-black pb-2">
+                        <h3 className="text-xs font-black uppercase tracking-widest">Recommended Positions</h3>
+                        <span className="text-[8px] font-black bg-black text-white px-2 py-0.5">Algorithm Matches</span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {recommendedJobs.map(job => {
+                          const alreadyApplied = applications.some(app => app.jobTitle === job.title && app.companyName === job.companyName);
+                          return (
+                            <div key={job.id} className="bg-white border-2 border-black p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative flex flex-col justify-between">
+                              <div>
+                                <div className="flex justify-between items-start mb-3">
+                                  <span className="bg-sky-50 border border-sky-300 text-sky-600 px-2 py-0.5 text-[8px] font-black uppercase">{job.type}</span>
+                                  <span className="text-[8px] font-bold text-slate-400 uppercase">{job.datePosted}</span>
+                                </div>
+                                <h4 className="font-black text-sm uppercase text-black leading-tight mb-1">{job.title}</h4>
+                                <p className="text-[10px] font-black uppercase text-sky-500 mb-3">{job.companyName}</p>
+                                <p className="text-[10px] text-slate-500 leading-relaxed font-bold uppercase mb-4 line-clamp-2">{job.description}</p>
+                              </div>
+
+                              <div className="border-t border-slate-100 pt-3 flex justify-between items-center mt-auto">
+                                <span className="text-[9px] font-black text-black">{job.salary}</span>
+                                <button
+                                  type="button"
+                                  disabled={alreadyApplied}
+                                  onClick={() => handleQuickApply(job)}
+                                  className={`px-3 py-1.5 border border-black text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none
+                                    ${alreadyApplied ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none active:translate-y-0' : 'bg-sky-400 hover:bg-black hover:text-sky-400 text-black'}`}
+                                >
+                                  {alreadyApplied ? 'Applied ✓' : 'Quick Apply'}
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 4: BOOKMARKS & ALERTS */}
+                  {activeTab === 'saved' && (
+                    <div className="space-y-8 animate-fadeIn">
+                      {/* Bookmarked Jobs */}
+                      <div className="space-y-4">
+                        <h3 className="text-xs font-black uppercase tracking-widest border-b-2 border-black pb-2">Bookmarked Jobs</h3>
+                        {savedJobs.length === 0 ? (
+                          <p className="text-[10px] font-bold text-slate-400 uppercase italic">No bookmarked positions found.</p>
+                        ) : (
+                          <div className="space-y-4">
+                            {savedJobs.map(job => (
+                              <div key={job.id} className="bg-white border-2 border-black p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-slate-50 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                <div>
+                                  <h4 className="font-black text-xs uppercase text-black">{job.title}</h4>
+                                  <p className="text-[9px] font-bold uppercase text-slate-500">{job.companyName} — {job.location}</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-[9px] font-black text-sky-500">{job.salary}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveBookmark(job.id)}
+                                    className="text-red-500 hover:text-red-700 font-black text-[8px] uppercase tracking-wider border border-red-200 px-2 py-1 bg-white hover:bg-red-50 cursor-pointer"
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Saved Alerts */}
+                      <div className="space-y-4 pt-4 border-t-2 border-slate-100">
+                        <h3 className="text-xs font-black uppercase tracking-widest border-b-2 border-black pb-2">Saved Job Search Alerts</h3>
+                        <div className="space-y-3">
+                          {jobAlerts.map(alert => (
+                            <div key={alert.id} className="bg-slate-50 border-2 border-black p-4 flex justify-between items-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                              <div>
+                                <h4 className="font-black text-xs uppercase text-black">Alert: "{alert.keyword}"</h4>
+                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
+                                  Filters: {alert.location} | {alert.experience}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className={`text-[8px] font-black uppercase px-2 py-0.5 border border-black
+                                  ${alert.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-500'}`}>
+                                  {alert.active ? 'Active' : 'Disabled'}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleAlert(alert.id)}
+                                  className="px-2 py-1 bg-black text-white hover:bg-sky-500 hover:text-black border border-black text-[8px] font-black uppercase tracking-wider cursor-pointer transition-colors"
+                                >
+                                  Toggle Alert
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>
