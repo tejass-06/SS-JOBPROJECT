@@ -1,0 +1,694 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  User, 
+  Settings as SettingsIcon, 
+  Bell, 
+  Shield, 
+  Check, 
+  Trash2, 
+  Upload, 
+  Moon, 
+  Sun, 
+  Eye, 
+  Smartphone,
+  Save,
+  Zap
+} from 'lucide-react';
+
+const SettingsPage = () => {
+  const [user, setUser] = useState(null);
+  const [activeTab, setActiveTab] = useState('account'); // 'account' | 'preferences' | 'notifications' | 'security'
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  // Setting States
+  const [accountForm, setAccountForm] = useState({
+    name: '',
+    email: '',
+    companyName: '',
+    visibility: 'public',
+    resumeName: 'Resume_Technical_Draft.pdf'
+  });
+
+  const [theme, setTheme] = useState('light');
+  const [accentColor, setAccentColor] = useState('sky');
+  const [density, setDensity] = useState('comfortable');
+
+  const [notifications, setNotifications] = useState({
+    emailJobs: true,
+    emailApplications: true,
+    emailMessages: false,
+    frequency: 'instant'
+  });
+
+  const [security, setSecurity] = useState({
+    twoFactor: false,
+    sessionTimeout: '30'
+  });
+
+  // Load user data on mount
+  useEffect(() => {
+    const userStr = localStorage.getItem('currentUser');
+    if (userStr) {
+      try {
+        const parsed = JSON.parse(userStr);
+        setUser(parsed);
+        setAccountForm({
+          name: parsed.name || '',
+          email: parsed.email || '',
+          companyName: parsed.companyName || '',
+          visibility: parsed.visibility || 'public',
+          resumeName: parsed.resumeName || 'Resume_Technical_Draft.pdf'
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Load theme & preferences
+    const savedTheme = localStorage.getItem('appTheme') || 'light';
+    const savedAccent = localStorage.getItem('appAccent') || 'sky';
+    const savedDensity = localStorage.getItem('appDensity') || 'comfortable';
+    setTheme(savedTheme);
+    setAccentColor(savedAccent);
+    setDensity(savedDensity);
+
+    const savedNotify = localStorage.getItem('appNotifications');
+    if (savedNotify) {
+      try { setNotifications(JSON.parse(savedNotify)); } catch {}
+    }
+
+    const savedSecurity = localStorage.getItem('appSecurity');
+    if (savedSecurity) {
+      try { setSecurity(JSON.parse(savedSecurity)); } catch {}
+    }
+  }, []);
+
+  // Show status toasts
+  const triggerToast = (msg) => {
+    setToastMessage(msg);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
+  // Save Account Profile
+  const handleSaveAccount = (e) => {
+    e.preventDefault();
+    if (!user) return;
+
+    const updatedUser = {
+      ...user,
+      name: accountForm.name,
+      email: accountForm.email,
+      companyName: accountForm.companyName,
+      visibility: accountForm.visibility,
+      resumeName: accountForm.resumeName
+    };
+
+    // Update in database list
+    let users = [];
+    try {
+      users = JSON.parse(localStorage.getItem('users') || '[]');
+    } catch {}
+
+    const index = users.findIndex(u => u.email.toLowerCase() === user.email.toLowerCase() && u.role === user.role);
+    if (index !== -1) {
+      users[index] = updatedUser;
+      localStorage.setItem('users', JSON.stringify(users));
+    }
+
+    // Update current session
+    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+    triggerToast('Profile account registry synchronized successfully.');
+  };
+
+  // Save System Preferences
+  const handleSavePreferences = () => {
+    localStorage.setItem('appTheme', theme);
+    localStorage.setItem('appAccent', accentColor);
+    localStorage.setItem('appDensity', density);
+
+    // Apply color accent properties to documentElement
+    const accentColors = {
+      sky: '#0ea5e9',
+      emerald: '#10b981',
+      pink: '#ec4899',
+      amber: '#f59e0b'
+    };
+    const color = accentColors[accentColor] || '#0ea5e9';
+    document.documentElement.style.setProperty('--accent-color', color);
+
+    triggerToast('System preference variables updated.');
+  };
+
+  // Save Notifications
+  const handleSaveNotifications = () => {
+    localStorage.setItem('appNotifications', JSON.stringify(notifications));
+    triggerToast('Alert signals preferences committed.');
+  };
+
+  // Save Security settings
+  const handleSaveSecurity = () => {
+    localStorage.setItem('appSecurity', JSON.stringify(security));
+    triggerToast('Cryptographic security settings saved.');
+  };
+
+  // Delete Account Purge
+  const handleDeleteAccount = () => {
+    if (!window.confirm('WARNING: Are you sure you want to permanently purge your account from the local database? This action is irreversible.')) {
+      return;
+    }
+
+    let users = [];
+    try {
+      users = JSON.parse(localStorage.getItem('users') || '[]');
+    } catch {}
+
+    const updatedUsers = users.filter(
+      u => !(u.email.toLowerCase() === user.email.toLowerCase() && u.role === user.role)
+    );
+    localStorage.setItem('users', JSON.stringify(updatedUsers));
+    localStorage.removeItem('currentUser');
+    
+    // Redirect to home
+    window.location.href = '/';
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-white pt-32 flex items-center justify-center">
+        <div className="text-center font-black uppercase tracking-wider text-slate-400">
+          No authorized active session found. Please sign in.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white min-h-screen pt-28 pb-20 relative">
+      
+      {/* Background Squares */}
+      <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" 
+           style={{ 
+             backgroundImage: `linear-gradient(#000 1.5px, transparent 1.5px), linear-gradient(90deg, #000 1.5px, transparent 1.5px)`, 
+             backgroundSize: '40px 40px' 
+           }}>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-6 relative z-10">
+        
+        {/* Title Header */}
+        <header className="mb-12 border-b-4 border-black pb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-4">
+              System <br /><span className="text-sky-500 italic">Settings.</span>
+            </h1>
+            <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Configure profile nodes, alerts, and platform layouts.</p>
+          </div>
+          
+          <div className="bg-slate-50 border-[3px] border-black p-4 inline-flex items-center gap-3 self-start md:self-auto shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <span className="w-3 h-3 rounded-full bg-emerald-500 border border-black animate-pulse"></span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+              Active: {user.name} ({user.role})
+            </span>
+          </div>
+        </header>
+
+        {/* Success Toast */}
+        <AnimatePresence>
+          {showToast && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-black border-[3px] border-emerald-500 text-white px-6 py-4 shadow-[6px_6px_0px_0px_rgba(16,185,129,1)] flex items-center gap-3 font-black uppercase tracking-wider text-xs"
+            >
+              <Check className="text-emerald-500" size={16} />
+              {toastMessage}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Main Settings Body */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          
+          {/* Left Navigation Tabs */}
+          <aside className="lg:col-span-3 flex flex-col gap-2">
+            {[
+              { id: 'account', name: 'Profile & Account', icon: User },
+              { id: 'preferences', name: 'Preferences & Themes', icon: SettingsIcon },
+              { id: 'notifications', name: 'Alerts & Signals', icon: Bell },
+              { id: 'security', name: 'Security & Privacy', icon: Shield },
+              { id: 'pro', name: 'Get hirrd Pro ⚡', icon: Zap }
+            ].map(tab => {
+              const IconComp = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`text-left px-5 py-4 font-black uppercase text-[11px] tracking-widest border-3 transition-all flex items-center gap-3 cursor-pointer
+                    ${activeTab === tab.id 
+                      ? 'bg-black text-white border-black translate-x-1 shadow-[4px_4px_0px_0px_rgba(14,165,233,1)]' 
+                      : 'bg-white text-slate-400 border-slate-100 hover:border-black hover:text-black'}
+                  `}
+                >
+                  <IconComp size={16} />
+                  {tab.name}
+                </button>
+              );
+            })}
+          </aside>
+
+          {/* Right Forms Area */}
+          <main className="lg:col-span-9">
+            
+            {/* 1. Account Settings */}
+            {activeTab === 'account' && (
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white border-[3px] border-black p-8 md:p-10 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] space-y-8"
+              >
+                <h3 className="text-2xl font-black uppercase tracking-tight border-b-2 border-black pb-4">
+                  Account Details
+                </h3>
+
+                <form onSubmit={handleSaveAccount} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Name */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Full Name</label>
+                      <input 
+                        type="text" 
+                        required
+                        className="w-full bg-slate-50 border-[3px] border-black p-3 font-bold focus:outline-none focus:bg-white transition-colors"
+                        value={accountForm.name}
+                        onChange={(e) => setAccountForm({ ...accountForm, name: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Email */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Email Address</label>
+                      <input 
+                        type="email" 
+                        required
+                        className="w-full bg-slate-50 border-[3px] border-black p-3 font-bold focus:outline-none focus:bg-white transition-colors"
+                        value={accountForm.email}
+                        onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Conditional: Recruiter Company Name */}
+                    {user.role === 'employer' && (
+                      <div className="space-y-2 md:col-span-2">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Company Name</label>
+                        <input 
+                          type="text" 
+                          required
+                          className="w-full bg-slate-50 border-[3px] border-black p-3 font-bold focus:outline-none focus:bg-white transition-colors"
+                          value={accountForm.companyName}
+                          onChange={(e) => setAccountForm({ ...accountForm, companyName: e.target.value })}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Profile Visibility */}
+                  {user.role === 'employee' && (
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Registry Visibility</label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {[
+                          { id: 'public', label: 'Public (All Recruiters)' },
+                          { id: 'recruiter', label: 'Protected (Recruiter Verification Only)' },
+                          { id: 'private', label: 'Hidden (Private Node)' }
+                        ].map(opt => (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => setAccountForm({ ...accountForm, visibility: opt.id })}
+                            className={`p-4 border-2 font-black uppercase text-[9px] tracking-wider transition-all
+                              ${accountForm.visibility === opt.id 
+                                ? 'bg-black border-black text-white shadow-[4px_4px_0px_0px_rgba(14,165,233,1)]' 
+                                : 'bg-slate-50 border-slate-100 hover:border-black text-slate-500 hover:text-black'}
+                            `}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Resume Upload Simulator */}
+                  {user.role === 'employee' && (
+                    <div className="p-6 bg-slate-50 border-2 border-dashed border-slate-300 rounded-none space-y-4">
+                      <div className="flex justify-between items-center flex-wrap gap-4">
+                        <div>
+                          <h4 className="text-xs font-black uppercase mb-1">Attached CV Documentation</h4>
+                          <p className="text-[10px] font-bold text-slate-400 tracking-tight">{accountForm.resumeName}</p>
+                        </div>
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            const customName = prompt('Enter mock file name to attach:', 'Resume_Draft_Final_2026.pdf');
+                            if (customName) setAccountForm({ ...accountForm, resumeName: customName });
+                          }}
+                          className="bg-black text-white hover:bg-sky-500 hover:text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-2"
+                        >
+                          <Upload size={12} /> Replace
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="pt-6 border-t-2 border-slate-100 flex justify-between items-center gap-4 flex-wrap">
+                    <button 
+                      type="submit"
+                      className="bg-black text-white hover:bg-sky-500 hover:text-black px-8 py-4 font-black uppercase text-xs tracking-[0.2em] transition-all shadow-[6px_6px_0px_0px_rgba(14,165,233,1)] active:translate-y-1 active:shadow-none flex items-center gap-2 cursor-pointer"
+                    >
+                      <Save size={14} /> Synchronize Profile
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            )}
+
+            {/* 2. System Preferences */}
+            {activeTab === 'preferences' && (
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white border-[3px] border-black p-8 md:p-10 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] space-y-8"
+              >
+                <h3 className="text-2xl font-black uppercase tracking-tight border-b-2 border-black pb-4">
+                  Layout & Design Settings
+                </h3>
+
+                <div className="space-y-8">
+                  {/* Theme Mode */}
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Theme Scheme</label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        onClick={() => setTheme('light')}
+                        className={`p-6 border-[3px] flex items-center justify-center gap-3 font-black uppercase text-xs tracking-wider transition-all
+                          ${theme === 'light' 
+                            ? 'bg-white border-black text-black shadow-[6px_6px_0px_0px_rgba(14,165,233,1)]' 
+                            : 'bg-slate-50 border-slate-100 text-slate-400 hover:border-black hover:text-black'}
+                        `}
+                      >
+                        <Sun size={18} className="text-amber-500" fill="currentColor" /> Light Mode
+                      </button>
+
+                      <button
+                        onClick={() => setTheme('dark')}
+                        className={`p-6 border-[3px] flex items-center justify-center gap-3 font-black uppercase text-xs tracking-wider transition-all
+                          ${theme === 'dark' 
+                            ? 'bg-black border-black text-white shadow-[6px_6px_0px_0px_rgba(14,165,233,1)]' 
+                            : 'bg-slate-50 border-slate-100 text-slate-400 hover:border-black hover:text-black'}
+                        `}
+                      >
+                        <Moon size={18} className="text-sky-400" fill="currentColor" /> Dark Mode
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Accent Color */}
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">System Accent Color</label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {[
+                        { id: 'sky', label: 'Sky Blue', color: 'bg-[#0ea5e9]' },
+                        { id: 'emerald', label: 'Emerald Green', color: 'bg-[#10b981]' },
+                        { id: 'pink', label: 'Hot Pink', color: 'bg-[#ec4899]' },
+                        { id: 'amber', label: 'Amber Gold', color: 'bg-[#f59e0b]' }
+                      ].map(opt => (
+                        <button
+                          key={opt.id}
+                          onClick={() => setAccentColor(opt.id)}
+                          className={`p-4 border-2 font-black uppercase text-[10px] tracking-wider transition-all flex items-center gap-2
+                            ${accentColor === opt.id 
+                              ? 'bg-black border-black text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]' 
+                              : 'bg-slate-50 border-slate-100 hover:border-black text-slate-500 hover:text-black'}
+                          `}
+                        >
+                          <span className={`w-3.5 h-3.5 border border-black rounded-full ${opt.color}`}></span>
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Font Density */}
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Layout Spacing Density</label>
+                    <div className="flex gap-4">
+                      {['cozy', 'comfortable', 'spacious'].map(opt => (
+                        <button
+                          key={opt}
+                          onClick={() => setDensity(opt)}
+                          className={`flex-1 p-3 border-2 font-black uppercase text-[10px] tracking-widest transition-all
+                            ${density === opt 
+                              ? 'bg-black border-black text-white' 
+                              : 'bg-slate-50 border-slate-100 hover:border-black hover:text-black text-slate-400'}
+                          `}
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="pt-6 border-t-2 border-slate-100">
+                    <button 
+                      onClick={handleSavePreferences}
+                      className="bg-black text-white hover:bg-sky-500 hover:text-black px-8 py-4 font-black uppercase text-xs tracking-[0.2em] transition-all shadow-[6px_6px_0px_0px_rgba(14,165,233,1)] active:translate-y-1 active:shadow-none cursor-pointer"
+                    >
+                      Apply Preferences
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* 3. Notification Settings */}
+            {activeTab === 'notifications' && (
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white border-[3px] border-black p-8 md:p-10 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] space-y-8"
+              >
+                <h3 className="text-2xl font-black uppercase tracking-tight border-b-2 border-black pb-4">
+                  Signal Alerts Preferences
+                </h3>
+
+                <div className="space-y-6">
+                  {/* Email Switches */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+                      <div>
+                        <h4 className="text-xs font-black uppercase mb-1">New Vacancy Alert Signals</h4>
+                        <p className="text-[10px] font-bold text-slate-400">Receive dispatch emails when matching positions go live.</p>
+                      </div>
+                      <input 
+                        type="checkbox"
+                        className="w-5 h-5 accent-sky-500 cursor-pointer"
+                        checked={notifications.emailJobs}
+                        onChange={(e) => setNotifications({ ...notifications, emailJobs: e.target.checked })}
+                      />
+                    </div>
+
+                    <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+                      <div>
+                        <h4 className="text-xs font-black uppercase mb-1">Application Dispatches Updates</h4>
+                        <p className="text-[10px] font-bold text-slate-400">Alert me when a recruiter updates an application pipeline node.</p>
+                      </div>
+                      <input 
+                        type="checkbox"
+                        className="w-5 h-5 accent-sky-500 cursor-pointer"
+                        checked={notifications.emailApplications}
+                        onChange={(e) => setNotifications({ ...notifications, emailApplications: e.target.checked })}
+                      />
+                    </div>
+
+                    <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+                      <div>
+                        <h4 className="text-xs font-black uppercase mb-1">Direct Chat Messages</h4>
+                        <p className="text-[10px] font-bold text-slate-400">Receive instant alerts for recruiter chat transcripts.</p>
+                      </div>
+                      <input 
+                        type="checkbox"
+                        className="w-5 h-5 accent-sky-500 cursor-pointer"
+                        checked={notifications.emailMessages}
+                        onChange={(e) => setNotifications({ ...notifications, emailMessages: e.target.checked })}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Dispatch Frequency */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Dispatch Interval Frequency</label>
+                    <select
+                      className="w-full bg-slate-50 border-[3px] border-black p-3.5 font-bold focus:outline-none uppercase text-xs tracking-wider"
+                      value={notifications.frequency}
+                      onChange={(e) => setNotifications({ ...notifications, frequency: e.target.value })}
+                    >
+                      <option value="instant">Instant Signals Dispatch</option>
+                      <option value="daily">Daily Digest Dispatches</option>
+                      <option value="weekly">Weekly Compilation Node</option>
+                    </select>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="pt-6 border-t-2 border-slate-100">
+                    <button 
+                      onClick={handleSaveNotifications}
+                      className="bg-black text-white hover:bg-sky-500 hover:text-black px-8 py-4 font-black uppercase text-xs tracking-[0.2em] transition-all shadow-[6px_6px_0px_0px_rgba(14,165,233,1)] active:translate-y-1 active:shadow-none cursor-pointer"
+                    >
+                      Save Dispatch Rules
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* 4. Security & Privacy */}
+            {activeTab === 'security' && (
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="space-y-8"
+              >
+                <div className="bg-white border-[3px] border-black p-8 md:p-10 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] space-y-6">
+                  <h3 className="text-2xl font-black uppercase tracking-tight border-b-2 border-black pb-4">
+                    Cryptographic Controls
+                  </h3>
+
+                  {/* Two Factor Toggle */}
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+                    <div>
+                      <h4 className="text-xs font-black uppercase mb-1">Two-Factor Authenticator (2FA)</h4>
+                      <p className="text-[10px] font-bold text-slate-400">Require an MFA token signature on session verification requests.</p>
+                    </div>
+                    <input 
+                      type="checkbox"
+                      className="w-5 h-5 accent-sky-500 cursor-pointer"
+                      checked={security.twoFactor}
+                      onChange={(e) => setSecurity({ ...security, twoFactor: e.target.checked })}
+                    />
+                  </div>
+
+                  {/* Session Timeout */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Session Idle Timeout</label>
+                    <select
+                      className="w-full bg-slate-50 border-[3px] border-black p-3.5 font-bold focus:outline-none uppercase text-xs tracking-wider"
+                      value={security.sessionTimeout}
+                      onChange={(e) => setSecurity({ ...security, sessionTimeout: e.target.value })}
+                    >
+                      <option value="15">15 Minutes Idle</option>
+                      <option value="30">30 Minutes Idle</option>
+                      <option value="60">1 Hour Idle</option>
+                      <option value="never">Never Terminal Terminate</option>
+                    </select>
+                  </div>
+
+                  {/* Simulated Session Registries */}
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Registered Session Nodes</label>
+                    <div className="bg-slate-50 border-2 border-black p-4 space-y-2">
+                      <div className="flex justify-between items-center text-[10px] font-bold text-slate-600">
+                        <span className="flex items-center gap-1.5"><Smartphone size={12} /> Chrome (Windows NT)</span>
+                        <span className="text-emerald-600 uppercase font-black tracking-widest">Active Node</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 border-t border-slate-200 pt-2">
+                        <span className="flex items-center gap-1.5"><Smartphone size={12} /> Safari (iOS Mobile)</span>
+                        <span>Logged out 2 hours ago</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="pt-4 flex justify-between items-center">
+                    <button 
+                      onClick={handleSaveSecurity}
+                      className="bg-black text-white hover:bg-sky-500 hover:text-black px-8 py-4 font-black uppercase text-xs tracking-[0.2em] transition-all shadow-[6px_6px_0px_0px_rgba(14,165,233,1)] active:translate-y-1 active:shadow-none cursor-pointer"
+                    >
+                      Save Security Rules
+                    </button>
+                  </div>
+                </div>
+
+                {/* DANGER ZONE */}
+                <div className="bg-red-50 border-[3px] border-red-500 p-8 shadow-[10px_10px_0px_0px_rgba(239,68,68,1)] space-y-6">
+                  <h3 className="text-2xl font-black uppercase tracking-tight border-b-2 border-red-500 text-red-700 pb-4">
+                    Danger Zone Purge
+                  </h3>
+                  <p className="text-xs font-black uppercase tracking-tight text-red-600">
+                    Purging your account will destroy your registry profile and credentials. All job pipelines and records will be deleted immediately.
+                  </p>
+                  <button 
+                    onClick={handleDeleteAccount}
+                    className="bg-red-600 text-white hover:bg-black hover:text-red-500 border-2 border-black px-6 py-4 font-black uppercase text-xs tracking-[0.2em] transition-colors flex items-center gap-2 cursor-pointer"
+                  >
+                    <Trash2 size={14} /> Purge Account Node
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* 5. Get hirrd Pro Tab */}
+            {activeTab === 'pro' && (
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-black text-white border-[3px] border-black p-8 md:p-10 shadow-[10px_10px_0px_0px_rgba(14,165,233,1)] space-y-8"
+              >
+                <div className="flex items-center gap-3">
+                  <Zap className="text-yellow-400 animate-bounce" size={32} fill="currentColor" />
+                  <h3 className="text-3xl font-black uppercase tracking-tight italic">
+                    Upgrade to hirrd Pro
+                  </h3>
+                </div>
+                <p className="text-sm font-bold text-slate-300 uppercase tracking-wide leading-relaxed">
+                  Unlock priority pipelines, direct recruiter access bypass, and deep analytics indexes. Join the upper tier of technical professionals.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 text-xs font-bold uppercase tracking-wider text-slate-300">
+                  <div className="flex items-center gap-2">
+                    <Check className="text-emerald-500" size={16} /> ⚡ Queue Bypass Protocol
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="text-emerald-500" size={16} /> 📊 Priority Rank Boost
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="text-emerald-500" size={16} /> 🔐 Multi-Session Security
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="text-emerald-500" size={16} /> 📁 Infinite Portfolio Storage
+                  </div>
+                </div>
+                <div className="pt-6 border-t border-slate-800">
+                  <button 
+                    onClick={() => window.location.href = '/pro'}
+                    className="bg-sky-500 text-black hover:bg-white hover:text-black px-8 py-4 font-black uppercase text-xs tracking-[0.2em] transition-all shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] active:translate-y-1 active:shadow-none cursor-pointer"
+                  >
+                    Launch Upgrade Protocol
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SettingsPage;
