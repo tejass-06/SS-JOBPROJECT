@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Briefcase, Menu, X, ArrowRight, ChevronDown } from 'lucide-react';
+import { Briefcase, Menu, X, ArrowRight, ChevronDown, Settings as SettingsIcon } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -88,34 +88,6 @@ const Navbar = () => {
               {/* CTA Redirect to Contact or Login/Register */}
               {currentUser ? (
                 <div className="flex items-center gap-6">
-                  <a 
-                    href={currentUser.role === 'employee' ? '/profile' : currentUser.role === 'employer' ? '/employer/dashboard' : '/admin/dashboard'}
-                    className="text-[13px] font-bold text-slate-500 hover:text-black uppercase tracking-widest transition-all relative group flex items-center gap-1.5"
-                  >
-                    {currentUser.role === 'employee' ? 'Profile' : 'Dashboard'}
-                    {currentUser.isPro && (
-                      <span className="bg-yellow-400 text-black text-[9px] font-black px-1.5 py-0.5 rounded-none border border-black uppercase tracking-widest shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] animate-pulse shrink-0">
-                        PRO
-                      </span>
-                    )}
-                    <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-sky-500"></span>
-                  </a>
-                  {currentUser.role === 'employee' && (
-                    <a 
-                      href="/resume-builder"
-                      className="text-[13px] font-bold text-slate-500 hover:text-black uppercase tracking-widest transition-all relative group"
-                    >
-                      Build CV
-                      <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-sky-500"></span>
-                    </a>
-                  )}
-                  <a 
-                    href="/settings"
-                    className="text-[13px] font-bold text-slate-500 hover:text-black uppercase tracking-widest transition-all relative group"
-                  >
-                    Settings
-                    <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-sky-500"></span>
-                  </a>
                   <button 
                     onClick={() => {
                       localStorage.removeItem('currentUser');
@@ -125,6 +97,34 @@ const Navbar = () => {
                   >
                     Sign Out
                   </button>
+                  <a 
+                    href="/settings"
+                    className="text-slate-500 hover:text-black hover:scale-110 transition-all p-1 flex items-center justify-center shrink-0"
+                    title="Account Settings"
+                  >
+                    <SettingsIcon size={20} />
+                  </a>
+                  <a 
+                    href={currentUser.role === 'employee' ? '/profile' : currentUser.role === 'employer' ? '/employer/dashboard' : '/admin/dashboard'}
+                    className="flex items-center shrink-0 relative"
+                  >
+                    {currentUser.profilePicture ? (
+                      <img 
+                        src={currentUser.profilePicture} 
+                        alt="User Profile" 
+                        className="w-10 h-10 rounded-full object-cover border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:scale-105 transition-transform" 
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full border-2 border-black bg-sky-100 flex items-center justify-center font-black text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] uppercase hover:scale-105 transition-transform text-xs">
+                        {currentUser.name ? currentUser.name.charAt(0) : currentUser.email.charAt(0)}
+                      </div>
+                    )}
+                    {currentUser.isPro && (
+                      <span className="absolute -top-1 -right-1 bg-yellow-400 text-black text-[7px] font-black px-1.5 py-0.5 border border-black uppercase tracking-wider shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] rounded-none">
+                        PRO
+                      </span>
+                    )}
+                  </a>
                 </div>
               ) : (
                 <button 
@@ -221,15 +221,7 @@ const Navbar = () => {
                     >
                       {currentUser.role === 'employee' ? 'Profile' : 'Dashboard'}
                     </button>
-                    {currentUser.role === 'employee' && (
-                      <button 
-                        onClick={() => window.location.href = '/resume-builder'}
-                        className="w-full border-2 border-black py-4 font-bold uppercase tracking-widest shadow-md hover:bg-sky-500 hover:text-black transition-colors cursor-pointer"
-                      >
-                        Build CV
-                      </button>
-                    )}
-                    <button 
+                     <button 
                       onClick={() => window.location.href = '/settings'}
                       className="w-full border-2 border-black py-4 font-bold uppercase tracking-widest shadow-md hover:bg-sky-500 hover:text-black transition-colors cursor-pointer"
                     >

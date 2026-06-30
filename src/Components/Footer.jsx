@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Linkedin,
@@ -9,13 +9,17 @@ import {
   Mail,
   Phone,
   MapPin,
-  Bot,
   ChevronRight,
   Briefcase,
-  Users
+  Users,
+  Send,
+  Check
 } from "lucide-react";
 
 const Footer = () => {
+  const [emailInput, setEmailInput] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
+
   const container = {
     hidden: { opacity: 0 },
     visible: {
@@ -29,80 +33,112 @@ const Footer = () => {
     visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
   };
 
-  return (
-    <footer className="bg-[#f8fafc] pt-24 pb-12">
-      <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        
-        {/* --- TOP CTA CARD --- */}
-      <motion.div
-  initial={{ opacity: 0, y: 30 }}
-  whileInView={{ opacity: 1, y: 0 }}
-  viewport={{ once: true }}
-  /* Mobile par padding aur margin kam rakha hai taaki content tight dikhe */
-  className="bg-white p-8 md:p-12 lg:p-16 mb-12 md:mb-24 rounded-[30px] md:rounded-[40px] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.05)] flex flex-col lg:flex-row items-center justify-between gap-10"
->
-  <div className="text-center lg:text-left flex-1 w-full">
-    {/* Mobile par text 3xl rakha hai (kaafi bada h par screen se bahar nahi jayega) */}
-    <h2 className="text-3xl md:text-5xl lg:text-7xl font-extrabold text-slate-900 leading-[1.2] lg:leading-tight tracking-tighter mb-4 md:mb-6">
-      Hire better, <br />
-      <span className="text-sky-600">Hired faster.</span>
-    </h2>
-    {/* Font size ko mobile ke liye adjust kiya hai */}
-    <p className="text-slate-500 font-medium text-lg md:text-xl lg:text-2xl max-w-xl mx-auto lg:mx-0">
-      hirrd: Next-gen talent matching.
-    </p>
-  </div>
+  const handleSubscribe = (e) => {
+    e.preventDefault();
+    if (!emailInput) return;
+    setSubscribed(true);
+    setTimeout(() => {
+      setSubscribed(false);
+      setEmailInput("");
+    }, 3000);
+  };
 
-  {/* Mobile par buttons ek ke niche ek (flex-col) aur full width (w-full) honge */}
-  <div className="flex flex-col sm:flex-row gap-4 md:gap-6 w-full lg:w-auto shrink-0">
-    <button className="bg-sky-600 text-white px-8 md:px-14 py-4 md:py-6 rounded-xl md:rounded-2xl font-bold text-lg md:text-xl hover:bg-sky-700 transition-all shadow-lg shadow-sky-100 flex items-center justify-center gap-3 w-full sm:w-auto">
-      <Briefcase size={22} className="md:w-6 md:h-6" /> Post a Job
-    </button>
-    <button className="bg-white text-slate-900 border-2 border-slate-100 px-8 md:px-14 py-4 md:py-6 rounded-xl md:rounded-2xl font-bold text-lg md:text-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-3 w-full sm:w-auto">
-      <Users size={22} className="md:w-6 md:h-6" /> Find Talent
-    </button>
-  </div>
-</motion.div>
-        {/* --- MAIN GRID (Perfectly Aligned Rows) --- */}
+  return (
+    <footer className="bg-black text-white pt-24 pb-12 border-t-[4px] border-black relative overflow-hidden">
+      {/* Background Micro Grid */}
+      <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" 
+           style={{ 
+             backgroundImage: `linear-gradient(#fff 1.5px, transparent 1.5px), linear-gradient(90deg, #fff 1.5px, transparent 1.5px)`, 
+             backgroundSize: '30px 30px' 
+           }}>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
+        
+        {/* --- TOP CTA CARD (Neo-Brutalist Glassmorphism) --- */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="bg-[#111] border-[4px] border-white p-8 md:p-12 lg:p-16 mb-16 shadow-[10px_10px_0px_0px_rgba(14,165,233,1)] flex flex-col lg:flex-row items-center justify-between gap-10"
+        >
+          <div className="text-center lg:text-left flex-1 w-full">
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter leading-none mb-4">
+              Hire better, <br />
+              <span className="text-sky-400 italic">Hired faster.</span>
+            </h2>
+            <p className="text-slate-400 font-bold text-sm md:text-md uppercase tracking-widest">
+              hirrd: Next-gen talent matching matching engine.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto shrink-0">
+            <button 
+              onClick={() => window.location.href = '/signup?role=employer'}
+              className="bg-sky-400 text-black border-2 border-black hover:bg-white hover:text-black px-8 py-4 font-black uppercase text-xs tracking-widest transition-all shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Briefcase size={16} /> Post a Job
+            </button>
+            <button 
+              onClick={() => window.location.href = '/signup?role=employee'}
+              className="bg-white text-black border-2 border-black hover:bg-sky-400 hover:text-black px-8 py-4 font-black uppercase text-xs tracking-widest transition-all shadow-[4px_4px_0px_0px_rgba(14,165,233,1)] active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Users size={16} /> Find Talent
+            </button>
+          </div>
+        </motion.div>
+
+        {/* --- MAIN GRID (Premium 4-Column Layout) --- */}
         <motion.div
           variants={container}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16"
         >
-          {/* Column 1: Brand */}
-          <motion.div variants={item} className="flex flex-col">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-16 h-16 bg-sky-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
-                <Bot size={36} />
+          {/* Column 1: Brand & Newsletter */}
+          <motion.div variants={item} className="flex flex-col space-y-6">
+            <div>
+              <img src="/logo.png" alt="HIRRD Logo" className="h-12 w-auto object-contain mb-4" style={{ filter: 'brightness(0) invert(1)' }} />
+              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider leading-relaxed">
+                India's premium intelligence-led career ecosystem for tech elite.
+              </p>
+            </div>
+            
+            {/* Newsletter Subscription */}
+            <form onSubmit={handleSubscribe} className="space-y-2 pt-2">
+              <label className="text-[9px] font-black uppercase tracking-wider text-slate-500">Subscribe to Pipeline alerts</label>
+              <div className="flex border-2 border-white overflow-hidden shadow-[2px_2px_0px_0px_rgba(14,165,233,1)]">
+                <input 
+                  type="email" 
+                  required
+                  placeholder="EMAIL@DOMAIN.COM"
+                  className="bg-neutral-900 text-white placeholder-slate-600 px-3 py-2 text-xs font-black uppercase w-full focus:outline-none"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                />
+                <button 
+                  type="submit"
+                  className="bg-white text-black px-4 py-2 hover:bg-sky-400 hover:text-black transition-colors flex items-center justify-center"
+                >
+                  {subscribed ? <Check size={14} className="text-emerald-600" /> : <Send size={14} />}
+                </button>
               </div>
-              <span className="text-4xl font-black text-slate-900 tracking-tighter">
-                hirrd<span className="text-sky-600">.</span>
-              </span>
-            </div>
-            <p className="text-slate-500 font-bold text-xl leading-relaxed">
-              India's premium intelligence-led career ecosystem for tech elite.
-            </p>
-            <div className="flex gap-5 mt-10">
-              {[Linkedin, Twitter, Instagram, Facebook].map((Icon, i) => (
-                <Icon key={i} size={28} className="text-slate-400 hover:text-sky-600 cursor-pointer transition-all hover:-translate-y-1" />
-              ))}
-            </div>
+            </form>
           </motion.div>
 
           {/* Column 2: Jobseekers */}
           <motion.div variants={item}>
-            <h4 className="text-2xl font-black text-slate-900 mb-10 tracking-tight">For Jobseekers</h4>
-            <ul className="space-y-6">
+            <h4 className="text-sm font-black uppercase text-white mb-6 tracking-widest border-b border-neutral-800 pb-2">For Candidates</h4>
+            <ul className="space-y-3 text-xs font-bold uppercase tracking-wider text-slate-400">
               {[
                 { name: "Explore Jobs", path: "/" },
-                { name: "AI Resume Builder", path: "/resume-builder" },
+                { name: "AI Resume Builder", path: "/settings" },
                 { name: "Salary Insights", path: "#" },
                 { name: "Skill Assessment", path: "#" }
               ].map((linkItem) => (
-                <li key={linkItem.name} className="text-xl text-slate-500 font-bold hover:text-sky-600 cursor-pointer flex items-center group transition-all">
-                  <ChevronRight size={20} className="mr-0 opacity-0 group-hover:mr-2 group-hover:opacity-100 transition-all text-sky-600 shrink-0" />
+                <li key={linkItem.name} className="hover:text-sky-400 flex items-center group transition-colors">
+                  <ChevronRight size={14} className="mr-0 opacity-0 group-hover:mr-1.5 group-hover:opacity-100 transition-all text-sky-400 shrink-0" />
                   <a href={linkItem.path} className="w-full">{linkItem.name}</a>
                 </li>
               ))}
@@ -111,47 +147,56 @@ const Footer = () => {
 
           {/* Column 3: Employers */}
           <motion.div variants={item}>
-            <h4 className="text-2xl font-black text-slate-900 mb-10 tracking-tight">For Employers</h4>
-            <ul className="space-y-6">
+            <h4 className="text-sm font-black uppercase text-white mb-6 tracking-widest border-b border-neutral-800 pb-2">For Employers</h4>
+            <ul className="space-y-3 text-xs font-bold uppercase tracking-wider text-slate-400">
               {["Post Vacancy", "Talent Sourcing", "Screening Tools", "Enterprise Suite"].map((link) => (
-                <li key={link} className="text-xl text-slate-500 font-bold hover:text-sky-600 cursor-pointer flex items-center group transition-all">
-                  <ChevronRight size={20} className="mr-0 opacity-0 group-hover:mr-2 group-hover:opacity-100 transition-all" />
-                  {link}
+                <li key={link} className="hover:text-sky-400 flex items-center group transition-colors">
+                  <ChevronRight size={14} className="mr-0 opacity-0 group-hover:mr-1.5 group-hover:opacity-100 transition-all text-sky-400 shrink-0" />
+                  <a href="#" className="w-full">{link}</a>
                 </li>
               ))}
             </ul>
           </motion.div>
 
           {/* Column 4: Contact */}
-          <motion.div variants={item} className="space-y-10">
-            <h4 className="text-2xl font-black text-slate-900 mb-10 tracking-tight">hirrd HQ</h4>
-            <div className="flex items-start gap-4">
-              <MapPin className="text-sky-600 shrink-0 mt-1" size={28} />
-              <p className="text-xl text-slate-500 font-bold leading-snug">
-             Dharampeth, Nagpur, MH 440010
-              </p>
+          <motion.div variants={item} className="space-y-6">
+            <h4 className="text-sm font-black uppercase text-white tracking-widest border-b border-neutral-800 pb-2">hirrd HQ</h4>
+            <div className="space-y-4 text-xs font-bold uppercase tracking-wider text-slate-400">
+              <div className="flex items-start gap-2.5">
+                <MapPin className="text-sky-400 shrink-0 mt-0.5" size={16} />
+                <p className="leading-relaxed">Dharampeth, Nagpur, MH 440010</p>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Phone className="text-sky-400 shrink-0" size={16} />
+                <p className="font-black text-white">+1 (555) 123-4567</p>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Mail className="text-sky-400 shrink-0" size={16} />
+                <a href="mailto:demo@example.com" className="font-black text-sky-400 hover:underline break-all">
+                  demo@example.com
+                </a>
+              </div>
             </div>
-            <div className="flex items-center gap-4">
-              <Phone className="text-sky-600 shrink-0" size={28} />
-              <p className="text-2xl font-black text-slate-900">+1 (555) 123-4567</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <Mail className="text-sky-600 shrink-0" size={28} />
-              <p className="text-2xl font-black text-sky-600 hover:underline cursor-pointer">
-                demo@example.com
-              </p>
+            
+            {/* Social Links */}
+            <div className="flex gap-4 pt-2">
+              {[Linkedin, Twitter, Instagram, Facebook].map((Icon, i) => (
+                <div key={i} className="border border-neutral-800 hover:border-sky-400 p-2 transition-colors cursor-pointer bg-neutral-950">
+                  <Icon size={16} className="text-slate-400 hover:text-sky-400" />
+                </div>
+              ))}
             </div>
           </motion.div>
         </motion.div>
 
-        {/* --- BOTTOM BAR (Clean & Big) --- */}
-        <div className="pt-12 border-t border-slate-200 flex flex-col lg:flex-row justify-between items-center gap-8">
-          <p className="text-xl font-bold text-slate-400">
+        {/* --- BOTTOM BAR (Clean & Premium) --- */}
+        <div className="pt-8 border-t border-neutral-900 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-xs font-bold text-slate-600 uppercase tracking-widest">
             © 2026 hirrd. All rights reserved.
           </p>
-          <div className="flex gap-12 text-xl font-black text-slate-500">
-            <span className="hover:text-sky-600 cursor-pointer transition-all">Privacy</span>
-            <span className="hover:text-sky-600 cursor-pointer transition-all">Terms</span>
+          <div className="flex gap-8 text-xs font-black text-slate-500 uppercase tracking-wider">
+            <span className="hover:text-sky-400 cursor-pointer transition-colors">Privacy Policy</span>
+            <span className="hover:text-sky-400 cursor-pointer transition-colors">Terms of Service</span>
           </div>
         </div>
       </div>

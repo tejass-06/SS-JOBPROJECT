@@ -13,7 +13,9 @@ import {
   Eye, 
   Smartphone,
   Save,
-  Zap
+  Zap,
+  FileText,
+  ArrowRight
 } from 'lucide-react';
 
 const SettingsPage = () => {
@@ -241,6 +243,7 @@ const SettingsPage = () => {
               { id: 'preferences', name: 'Preferences & Themes', icon: SettingsIcon },
               { id: 'notifications', name: 'Alerts & Signals', icon: Bell },
               { id: 'security', name: 'Security & Privacy', icon: Shield },
+              { id: 'cv-builder', name: 'AI Resume Builder 📝', icon: FileText },
               { id: 'pro', name: 'Get hirrd Pro ⚡', icon: Zap }
             ].map(tab => {
               const IconComp = tab.icon;
@@ -643,7 +646,39 @@ const SettingsPage = () => {
               </motion.div>
             )}
 
-            {/* 5. Get hirrd Pro Tab */}
+            {/* 5. Resume Builder Tab */}
+            {activeTab === 'cv-builder' && (
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white border-[3px] border-black p-8 md:p-10 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] space-y-6"
+              >
+                <h3 className="text-2xl font-black uppercase tracking-tight border-b-2 border-black pb-4 flex items-center gap-2">
+                  <FileText className="text-sky-500" /> Resume Builder Engine
+                </h3>
+                <p className="text-xs font-bold text-slate-500 leading-relaxed uppercase">
+                  Compile a professional developer resume from your saved profile details, or create one manually with our step-by-step editor.
+                </p>
+                <div className="bg-sky-50 border-2 border-black p-6 space-y-4">
+                  <h4 className="font-black text-xs uppercase tracking-wider text-black">Available Templates</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                    {['Brutalist Dark', 'Mono Developer', 'Modern Light'].map(temp => (
+                      <div key={temp} className="border border-black p-3 bg-white text-[9px] font-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                        {temp}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  onClick={() => window.location.href = '/resume-builder'}
+                  className="bg-black text-white hover:bg-sky-500 hover:text-black py-4 px-8 font-black uppercase text-xs tracking-widest transition-all border-2 border-black shadow-[4px_4px_0px_0px_rgba(14,165,233,1)] active:translate-y-0.5 active:shadow-none cursor-pointer flex items-center gap-2"
+                >
+                  Launch Editor <ArrowRight size={14} />
+                </button>
+              </motion.div>
+            )}
+
+            {/* 6. Get hirrd Pro Tab */}
             {activeTab === 'pro' && (
               <motion.div 
                 initial={{ opacity: 0, x: 20 }}
